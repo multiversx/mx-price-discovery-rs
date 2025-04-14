@@ -31,6 +31,8 @@ pub trait AdminActionsModule:
             phase_before == phase_after,
             INVALID_TIMESTAMP_CHANGE_ERR_MSG
         );
+
+        self.set_user_deposit_withdraw_time_event(user_deposit_withdraw_time);
     }
 
     #[endpoint(setOwnerDepositWithdrawTime)]
@@ -51,6 +53,8 @@ pub trait AdminActionsModule:
             phase_before == phase_after,
             INVALID_TIMESTAMP_CHANGE_ERR_MSG
         );
+
+        self.set_owner_deposit_withdraw_time_event(owner_deposit_withdraw_time);
     }
 
     #[endpoint(setMinLaunchedTokens)]

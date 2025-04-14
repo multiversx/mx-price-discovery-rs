@@ -223,4 +223,10 @@ pub trait EventsModule: crate::common_storage::CommonStorageModule {
 
     #[event("setUserLimitEvent")]
     fn set_user_limit_event(&self, #[indexed] user: &ManagedAddress, limit: &BigUint);
+
+    #[event("setUserDepositWithdrawTimeEvent")]
+    fn set_user_deposit_withdraw_time_event(&self, new_time: Timestamp);
+
+    #[event("setOwnerDepositWithdrawTimeEvent")]
+    fn set_owner_deposit_withdraw_time_event(&self, new_time: Timestamp);
 }
