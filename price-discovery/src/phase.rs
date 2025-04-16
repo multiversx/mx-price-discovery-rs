@@ -76,7 +76,7 @@ pub trait PhaseModule:
     fn require_before_redeem(&self, phase: &Phase) {
         require!(
             phase < &Phase::OwnerRedeem,
-            "May not add new users during redeem phase"
+            "May only call this endpoint before redeem phase"
         );
     }
 
