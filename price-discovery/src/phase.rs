@@ -8,7 +8,8 @@ pub enum Phase {
     Idle,
     UserDepositWithdraw,
     OwnerDepositWithdraw,
-    Redeem,
+    OwnerRedeem,
+    UserRedeem,
 }
 
 #[multiversx_sc::module]
@@ -35,7 +36,13 @@ pub trait PhaseModule:
             return Phase::OwnerDepositWithdraw;
         }
 
-        Phase::Redeem
+        let owner_redeem_time = self.owner_redeem_time().get();
+        let owner_redeem_phase_end = owner_deposit_phase_end + owner_redeem_time;
+        if current_time < owner_redeem_phase_end {
+            return Phase::OwnerRedeem;
+        }
+
+        Phase::UserRedeem
     }
 
     fn require_user_deposit_withdraw_allowed(&self, phase: &Phase) {
@@ -52,8 +59,25 @@ pub trait PhaseModule:
         );
     }
 
-    fn require_redeem_allowed(&self, phase: &Phase) {
-        require!(phase == &Phase::Redeem, "Redeem not allowed in this phase");
+    fn require_owner_redeem_allowed(&self, phase: &Phase) {
+        require!(
+            phase == &Phase::OwnerRedeem,
+            "Owner redeem not allowed in this phase"
+        );
+    }
+
+    fn require_user_redeem_allowed(&self, phase: &Phase) {
+        require!(
+            phase == &Phase::UserRedeem,
+            "User redeem not allowed in this phase"
+        );
+    }
+
+    fn require_before_redeem(&self, phase: &Phase) {
+        require!(
+            phase < &Phase::OwnerRedeem,
+            "May not add new users during redeem phase"
+        );
     }
 
     #[view(getUserDepositWithdrawTime)]
@@ -63,4 +87,8 @@ pub trait PhaseModule:
     #[view(getOwnerDepositWithdrawTime)]
     #[storage_mapper("ownerDepositWithdrawTime")]
     fn owner_deposit_withdraw_time(&self) -> SingleValueMapper<Timestamp>;
+
+    #[view(getOwnerRedeemTime)]
+    #[storage_mapper("ownerRedeemTime")]
+    fn owner_redeem_time(&self) -> SingleValueMapper<Timestamp>;
 }

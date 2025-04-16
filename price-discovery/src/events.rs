@@ -229,4 +229,7 @@ pub trait EventsModule: crate::common_storage::CommonStorageModule {
 
     #[event("setOwnerDepositWithdrawTimeEvent")]
     fn set_owner_deposit_withdraw_time_event(&self, new_time: Timestamp);
+
+    #[event("setOwnerRedeemTimeEvent")]
+    fn set_owner_redeem_time_event(&self, new_time: Timestamp);
 }

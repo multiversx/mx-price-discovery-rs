@@ -17,19 +17,10 @@ pub trait AdminActionsModule:
     fn set_user_deposit_withdraw_time(&self, user_deposit_withdraw_time: Timestamp) {
         self.require_caller_admin();
 
-        let phase_before = self.get_current_phase();
-        require!(
-            phase_before <= Phase::UserDepositWithdraw,
-            INVALID_CURRENT_PHASE_ERR_MSG
-        );
-
-        self.user_deposit_withdraw_time()
-            .set(user_deposit_withdraw_time);
-
-        let phase_after = self.get_current_phase();
-        require!(
-            phase_before == phase_after,
-            INVALID_TIMESTAMP_CHANGE_ERR_MSG
+        self.set_timestamp(
+            user_deposit_withdraw_time,
+            &Phase::UserDepositWithdraw,
+            &self.user_deposit_withdraw_time(),
         );
 
         self.set_user_deposit_withdraw_time_event(user_deposit_withdraw_time);
@@ -39,22 +30,26 @@ pub trait AdminActionsModule:
     fn set_owner_deposit_withdraw_time(&self, owner_deposit_withdraw_time: Timestamp) {
         self.require_caller_admin();
 
-        let phase_before = self.get_current_phase();
-        require!(
-            phase_before <= Phase::OwnerDepositWithdraw,
-            INVALID_CURRENT_PHASE_ERR_MSG
-        );
-
-        self.owner_deposit_withdraw_time()
-            .set(owner_deposit_withdraw_time);
-
-        let phase_after = self.get_current_phase();
-        require!(
-            phase_before == phase_after,
-            INVALID_TIMESTAMP_CHANGE_ERR_MSG
+        self.set_timestamp(
+            owner_deposit_withdraw_time,
+            &Phase::OwnerDepositWithdraw,
+            &self.owner_deposit_withdraw_time(),
         );
 
         self.set_owner_deposit_withdraw_time_event(owner_deposit_withdraw_time);
+    }
+
+    #[endpoint(setOwnerRedeemTime)]
+    fn set_owner_redeem_time(&self, owner_redeem_time: Timestamp) {
+        self.require_caller_admin();
+
+        self.set_timestamp(
+            owner_redeem_time,
+            &Phase::OwnerRedeem,
+            &self.owner_redeem_time(),
+        );
+
+        self.set_owner_redeem_time_event(owner_redeem_time);
     }
 
     #[endpoint(setMinLaunchedTokens)]
@@ -63,10 +58,7 @@ pub trait AdminActionsModule:
         require!(min_launched_tokens > 0, "Invalid min launched tokens");
 
         let phase = self.get_current_phase();
-        require!(
-            phase != Phase::Redeem,
-            "May not set min launched tokens during redeem phase"
-        );
+        self.require_before_redeem(&phase);
 
         self.min_launched_tokens().set(min_launched_tokens);
     }
@@ -101,10 +93,7 @@ pub trait AdminActionsModule:
         self.require_caller_admin();
 
         let phase = self.get_current_phase();
-        require!(
-            phase != Phase::Redeem,
-            "May not add new users during redeem phase"
-        );
+        self.require_before_redeem(&phase);
 
         let id_mapper = self.user_id_mapper();
         let whitelist_mapper = self.user_whitelist();
@@ -124,10 +113,7 @@ pub trait AdminActionsModule:
         self.require_caller_admin();
 
         let phase = self.get_current_phase();
-        require!(
-            phase != Phase::Redeem,
-            "May not refund user during redeem phase"
-        );
+        self.require_before_redeem(&phase);
 
         let id_mapper = self.user_id_mapper();
         let whitelist_mapper = self.user_whitelist();
@@ -171,6 +157,27 @@ pub trait AdminActionsModule:
     ) {
         self.user_deposit_limit(user_id).set(limit);
         self.set_user_limit_event(user_addr, limit);
+    }
+
+    fn set_timestamp(
+        &self,
+        new_timestamp: Timestamp,
+        required_phase_limit: &Phase,
+        mapper: &SingleValueMapper<Timestamp>,
+    ) {
+        let phase_before = self.get_current_phase();
+        require!(
+            &phase_before <= required_phase_limit,
+            INVALID_CURRENT_PHASE_ERR_MSG
+        );
+
+        mapper.set(new_timestamp);
+
+        let phase_after = self.get_current_phase();
+        require!(
+            phase_before == phase_after,
+            INVALID_TIMESTAMP_CHANGE_ERR_MSG
+        );
     }
 
     #[storage_mapper("admin")]

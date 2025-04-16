@@ -37,6 +37,7 @@ pub trait PriceDiscovery:
         start_time: Timestamp,
         user_deposit_withdraw_time: Timestamp,
         owner_deposit_withdraw_time: Timestamp,
+        owner_redeem_time: Timestamp,
         user_min_deposit: BigUint,
         admin: ManagedAddress,
     ) {
@@ -60,7 +61,9 @@ pub trait PriceDiscovery:
             "Start time cannot be in the past"
         );
         require!(
-            user_deposit_withdraw_time > 0 && owner_deposit_withdraw_time > 0,
+            user_deposit_withdraw_time > 0
+                && owner_deposit_withdraw_time > 0
+                && owner_redeem_time > 0,
             "Invalid timestamps"
         );
 
@@ -71,6 +74,7 @@ pub trait PriceDiscovery:
             .set(user_deposit_withdraw_time);
         self.owner_deposit_withdraw_time()
             .set(owner_deposit_withdraw_time);
+        self.owner_redeem_time().set(owner_redeem_time);
         self.user_min_deposit().set(user_min_deposit);
 
         let price_precision = 10u64.pow(launched_token_decimals);
