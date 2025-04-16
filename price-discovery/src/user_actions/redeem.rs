@@ -9,26 +9,38 @@ pub trait RedeemModule:
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
     /// After all phases have ended,
-    /// users can withdraw their fair share of launched tokens,
-    /// while the owner can withdraw the accepted tokens.
-    #[endpoint]
-    fn redeem(&self) -> EgldOrEsdtTokenPayment {
+    /// users can withdraw their fair share of launched tokens.
+    #[endpoint(userRedeem)]
+    fn user_redeem_endpoint(&self) -> EgldOrEsdtTokenPayment {
         let phase = self.get_current_phase();
-        self.require_redeem_allowed(&phase);
+        self.require_user_redeem_allowed(&phase);
 
         let caller = self.blockchain().get_caller();
         let owner = self.blockchain().get_owner_address();
-        if caller != owner {
-            let bought_tokens = self.user_redeem(&caller);
-            self.emit_redeem_event(&bought_tokens.token_identifier, &bought_tokens.amount);
+        require!(
+            caller != owner,
+            "Invalid caller. Use ownerRedeem endpoint instead"
+        );
 
-            bought_tokens
-        } else {
-            let redeemed_tokens = self.owner_redeem(&caller);
-            self.emit_redeem_event(&redeemed_tokens.token_identifier, &redeemed_tokens.amount);
+        let bought_tokens = self.user_redeem(&caller);
+        self.emit_redeem_event(&bought_tokens.token_identifier, &bought_tokens.amount);
 
-            redeemed_tokens
-        }
+        bought_tokens
+    }
+
+    /// After all phases have ended,
+    /// the owner can withdraw the accepted tokens.
+    #[only_owner]
+    #[endpoint(ownerRedeem)]
+    fn owner_redeem_endpoint(&self) -> EgldOrEsdtTokenPayment {
+        let phase = self.get_current_phase();
+        self.require_owner_redeem_allowed(&phase);
+
+        let caller = self.blockchain().get_caller();
+        let redeemed_tokens = self.owner_redeem(&caller);
+        self.emit_redeem_event(&redeemed_tokens.token_identifier, &redeemed_tokens.amount);
+
+        redeemed_tokens
     }
 
     fn owner_redeem(&self, owner: &ManagedAddress) -> EgldOrEsdtTokenPayment {

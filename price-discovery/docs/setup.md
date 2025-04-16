@@ -15,6 +15,7 @@ Next we define the length of the phases. Over the start-end period, we define mu
 - start_time - phase 1 timestamp start
 - user_deposit_withdraw_time - phase 1 duration
 - owner_deposit_withdraw_time - phase 2 duration
+- owner_redeem_time - the time in which the owner can redeem his tokens
 - user_min_deposit - the min deposit the user must deposit the first time they interact with the contract. Other deposits are not restricted. The user may either withdraw up to the min deposit value or all the deposited tokens
 - admin - the user that can call the `set_min_launched_tokens` endpoint
 
@@ -28,34 +29,11 @@ fn init(
     start_time: Timestamp,
     user_deposit_withdraw_time: Timestamp,
     owner_deposit_withdraw_time: Timestamp,
+    owner_redeem_time: Timestamp,
     user_min_deposit: BigUint,
     admin: ManagedAddress,
 )
 ```
-
-After deployment, the SC requires the `redeem_token` to be issued and have its roles set. This is done through the `issue_redeem_token` endpoint:
-
-```rust
-#[only_owner]
-#[payable("EGLD")]
-#[endpoint(issueRedeemToken)]
-fn issue_redeem_token(
-    &self,
-    token_name: ManagedBuffer,
-    token_ticker: ManagedBuffer,
-    nr_decimals: usize,
-)
-```
-
-and
-
-```rust
-#[only_owner]
-#[endpoint(setTransferRole)]
-fn set_transfer_role(&self)
-```
-
-The redeem token is a an ESDT token that the users receive on deposits. Those can then be used to withdraw the initial tokens (or part of them, as per phase restrictions). 
 
 Once all these setup steps are complete, populate the whitelist of users with the following endpoint:
 

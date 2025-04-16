@@ -24,6 +24,7 @@ pub const USER_BALANCE: u64 = 1_000_000_000;
 pub const START_TIME: Timestamp = 10;
 pub const USER_DEPOSIT_TIME: Timestamp = 100;
 pub const OWNER_DEPOSIT_TIME: Timestamp = 100;
+pub const OWNER_REDEEM_TIME: Timestamp = 100;
 pub const MIN_LAUNCHED_TOKENS: u64 = 1_000;
 
 pub struct PriceDiscSetup<PriceDiscObjBuilder>
@@ -81,6 +82,7 @@ where
                     START_TIME,
                     USER_DEPOSIT_TIME,
                     OWNER_DEPOSIT_TIME,
+                    OWNER_REDEEM_TIME,
                     managed_biguint!(100),
                     managed_address!(&owner_address),
                 );
@@ -157,7 +159,7 @@ where
     pub fn call_user_redeem(&mut self, user: &Address) -> TxResult {
         self.b_mock
             .execute_tx(user, &self.pd_wrapper, &rust_biguint!(0), |sc| {
-                sc.redeem();
+                sc.user_redeem_endpoint();
             })
     }
 
@@ -167,7 +169,7 @@ where
             &self.pd_wrapper,
             &rust_biguint!(0),
             |sc| {
-                sc.redeem();
+                sc.owner_redeem_endpoint();
             },
         )
     }
