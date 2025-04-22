@@ -236,7 +236,7 @@ fn user_redeem_too_early_test() {
 
     setup
         .call_user_redeem(&setup.first_user_address.clone())
-        .assert_user_error("Redeem not allowed in this phase");
+        .assert_user_error("User redeem not allowed in this phase");
 }
 
 #[test]
@@ -252,9 +252,9 @@ fn user_redeem_no_owner_deposit() {
         .call_user_deposit(&setup.second_user_address.clone(), 9_000)
         .assert_ok();
 
-    setup
-        .b_mock
-        .set_block_timestamp(START_TIME + USER_DEPOSIT_TIME + OWNER_DEPOSIT_TIME + 1);
+    setup.b_mock.set_block_timestamp(
+        START_TIME + USER_DEPOSIT_TIME + OWNER_DEPOSIT_TIME + OWNER_REDEEM_TIME + 1,
+    );
 
     setup
         .call_user_redeem(&setup.first_user_address.clone())
@@ -298,18 +298,23 @@ fn user_redeem_ok_test() {
         .b_mock
         .set_block_timestamp(START_TIME + USER_DEPOSIT_TIME + OWNER_DEPOSIT_TIME + 1);
 
-    setup
-        .call_user_redeem(&setup.first_user_address.clone())
-        .assert_ok();
-    setup
-        .call_user_redeem(&setup.second_user_address.clone())
-        .assert_ok();
     setup.call_owner_redeem().assert_ok();
 
     // owner try withdraw twice
     setup
         .call_owner_redeem()
         .assert_error(10, "insufficient funds");
+
+    setup.b_mock.set_block_timestamp(
+        START_TIME + USER_DEPOSIT_TIME + OWNER_DEPOSIT_TIME + OWNER_REDEEM_TIME + 1,
+    );
+
+    setup
+        .call_user_redeem(&setup.first_user_address.clone())
+        .assert_ok();
+    setup
+        .call_user_redeem(&setup.second_user_address.clone())
+        .assert_ok();
 
     // check accepted token balance
     setup.b_mock.check_esdt_balance(
@@ -394,6 +399,12 @@ fn refund_user_test() {
         .b_mock
         .set_block_timestamp(START_TIME + USER_DEPOSIT_TIME + OWNER_DEPOSIT_TIME + 1);
 
+    setup.call_owner_redeem().assert_ok();
+
+    setup.b_mock.set_block_timestamp(
+        START_TIME + USER_DEPOSIT_TIME + OWNER_DEPOSIT_TIME + OWNER_REDEEM_TIME + 1,
+    );
+
     // user try redeem after refunded
     setup
         .call_user_redeem(&setup.first_user_address.clone())
@@ -402,7 +413,6 @@ fn refund_user_test() {
     setup
         .call_user_redeem(&setup.second_user_address.clone())
         .assert_ok();
-    setup.call_owner_redeem().assert_ok();
 
     // check accepted token balance
     setup.b_mock.check_esdt_balance(
