@@ -17,6 +17,15 @@ pub trait AdminActionsModule:
     fn set_user_deposit_withdraw_time(&self, user_deposit_withdraw_time: Timestamp) {
         self.require_caller_admin();
 
+        let current_phase = self.get_current_phase();
+        if current_phase == Phase::UserDepositWithdraw {
+            let current_time = self.user_deposit_withdraw_time().get();
+            require!(
+                current_time <= user_deposit_withdraw_time,
+                "May only extend phase at this point, not reduce"
+            );
+        }
+
         self.set_timestamp(
             user_deposit_withdraw_time,
             &Phase::UserDepositWithdraw,
