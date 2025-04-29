@@ -345,7 +345,7 @@ fn user_redeem_ok_test() {
     // owner try withdraw twice
     setup
         .call_owner_redeem()
-        .assert_error(10, "insufficient funds");
+        .assert_user_error("Owner already redeemed");
 
     setup.b_mock.set_block_timestamp(
         START_TIME + USER_DEPOSIT_TIME + OWNER_DEPOSIT_TIME + OWNER_REDEEM_TIME + 1,
@@ -357,6 +357,11 @@ fn user_redeem_ok_test() {
     setup
         .call_user_redeem(&setup.second_user_address.clone())
         .assert_ok();
+
+    // user try redeem twice
+    setup
+        .call_user_redeem(&setup.first_user_address.clone())
+        .assert_user_error("User already redeemed");
 
     // check accepted token balance
     setup.b_mock.check_esdt_balance(
