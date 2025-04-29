@@ -167,6 +167,14 @@ pub trait AdminActionsModule:
         user_id: AddressId,
         limit: &BigUint,
     ) {
+        if limit > &0 {
+            let user_min_deposit = self.user_min_deposit().get();
+            require!(
+                limit >= &user_min_deposit,
+                "May not set limit under min user deposit"
+            );
+        }
+
         self.user_deposit_limit(user_id).set(limit);
         self.set_user_limit_event(user_addr, limit);
     }
