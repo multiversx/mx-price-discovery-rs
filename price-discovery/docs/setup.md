@@ -42,12 +42,9 @@ Once all these setup steps are complete, populate the whitelist of users with th
 #[endpoint(addUsersToWhitelist)]
 fn add_users_to_whitelist(
     &self,
-    whitelist_complete: bool,
     whitelist: MultiValueEncoded<MultiValue2<ManagedAddress, BigUint>>,
 )
 ```
-
-If the whitelist is complete, pass `true` for the first argument. This ensures the new owner can't add additional addresses after the setup phase is complete.
 
 Later on, the `admin` can call the `setMinLaunchedTokens` to allow the owner to deposit the launched tokens. Until this value is set, the owner may not deposit tokens in the contract.
 
