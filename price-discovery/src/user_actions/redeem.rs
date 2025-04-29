@@ -16,12 +16,6 @@ pub trait RedeemModule:
         self.require_user_redeem_allowed(&phase);
 
         let caller = self.blockchain().get_caller();
-        let owner = self.blockchain().get_owner_address();
-        require!(
-            caller != owner,
-            "Invalid caller. Use ownerRedeem endpoint instead"
-        );
-
         let bought_tokens = self.user_redeem(&caller);
         self.emit_redeem_event(&bought_tokens.token_identifier, &bought_tokens.amount);
 
