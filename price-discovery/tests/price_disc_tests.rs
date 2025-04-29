@@ -507,5 +507,5 @@ fn set_timestamp_invalid_values_test() {
     // set timestamp too low
     setup
         .call_set_user_deposit_withdraw_timestamp(START_TIME + 20)
-        .assert_user_error("Invalid timestamp change");
+        .assert_user_error("May only extend phase at this point, not reduce");
 }

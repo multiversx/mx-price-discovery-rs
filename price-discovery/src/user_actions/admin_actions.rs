@@ -1,4 +1,7 @@
-use crate::{phase::Phase, Timestamp};
+use crate::{
+    phase::{Phase, MAX_PHASE_DURATION},
+    Timestamp,
+};
 
 multiversx_sc::imports!();
 
@@ -174,6 +177,8 @@ pub trait AdminActionsModule:
         required_phase_limit: &Phase,
         mapper: &SingleValueMapper<Timestamp>,
     ) {
+        self.require_valid_timestamp(new_timestamp);
+
         let phase_before = self.get_current_phase();
         require!(
             &phase_before <= required_phase_limit,
@@ -186,6 +191,13 @@ pub trait AdminActionsModule:
         require!(
             phase_before == phase_after,
             INVALID_TIMESTAMP_CHANGE_ERR_MSG
+        );
+    }
+
+    fn require_valid_timestamp(&self, timestamp: Timestamp) {
+        require!(
+            timestamp > 0 && timestamp <= MAX_PHASE_DURATION,
+            "Invalid timestamp"
         );
     }
 

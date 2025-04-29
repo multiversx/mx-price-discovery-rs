@@ -12,6 +12,8 @@ pub enum Phase {
     UserRedeem,
 }
 
+pub const MAX_PHASE_DURATION: Timestamp = 60 * 60 * 24 * 30; // 30 days
+
 #[multiversx_sc::module]
 pub trait PhaseModule:
     crate::common_storage::CommonStorageModule + crate::events::EventsModule
