@@ -25,7 +25,7 @@ pub trait RedeemModule:
         bought_tokens
     }
 
-    /// After all phases have ended,
+    /// After the OwnerDepositWithdraw phase has ended,
     /// the owner can withdraw the accepted tokens.
     #[only_owner]
     #[endpoint(ownerRedeem)]
