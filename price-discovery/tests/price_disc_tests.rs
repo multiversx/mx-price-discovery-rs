@@ -240,7 +240,7 @@ fn user_redeem_too_early_test() {
 }
 
 #[test]
-fn user_redeem_no_owner_deposit() {
+fn user_redeem_no_owner_deposit_test() {
     let mut setup = PriceDiscSetup::new(price_discovery::contract_obj);
 
     setup.b_mock.set_block_timestamp(START_TIME + 1);
@@ -251,6 +251,48 @@ fn user_redeem_no_owner_deposit() {
     setup
         .call_user_deposit(&setup.second_user_address.clone(), 9_000)
         .assert_ok();
+
+    setup.b_mock.set_block_timestamp(
+        START_TIME + USER_DEPOSIT_TIME + OWNER_DEPOSIT_TIME + OWNER_REDEEM_TIME + 1,
+    );
+
+    setup
+        .call_user_redeem(&setup.first_user_address.clone())
+        .assert_ok();
+    setup
+        .call_user_redeem(&setup.second_user_address.clone())
+        .assert_ok();
+
+    setup.b_mock.check_esdt_balance(
+        &setup.first_user_address,
+        ACCEPTED_TOKEN_ID,
+        &rust_biguint!(USER_BALANCE),
+    );
+    setup.b_mock.check_esdt_balance(
+        &setup.second_user_address,
+        ACCEPTED_TOKEN_ID,
+        &rust_biguint!(USER_BALANCE),
+    );
+}
+
+#[test]
+fn user_redeem_owner_forgot_to_withdraw_test() {
+    let mut setup = PriceDiscSetup::new(price_discovery::contract_obj);
+
+    setup.b_mock.set_block_timestamp(START_TIME + 1);
+
+    setup
+        .call_user_deposit(&setup.first_user_address.clone(), 1_000)
+        .assert_ok();
+    setup
+        .call_user_deposit(&setup.second_user_address.clone(), 9_000)
+        .assert_ok();
+
+    setup
+        .b_mock
+        .set_block_timestamp(START_TIME + USER_DEPOSIT_TIME + 1);
+
+    setup.call_owner_deposit(2_000).assert_ok();
 
     setup.b_mock.set_block_timestamp(
         START_TIME + USER_DEPOSIT_TIME + OWNER_DEPOSIT_TIME + OWNER_REDEEM_TIME + 1,

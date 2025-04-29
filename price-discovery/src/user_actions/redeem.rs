@@ -56,8 +56,12 @@ pub trait RedeemModule:
         let user_id = self.require_user_whitelisted(user);
         let total_user_deposit = self.total_deposit_by_user(user_id).take();
 
+        let accepted_token_id = self.accepted_token_id().get();
+        let accepted_token_sc_balance = self.blockchain().get_sc_balance(&accepted_token_id, 0);
         let launched_token_supply = self.launched_token_balance().get();
-        if launched_token_supply != 0 {
+
+        // only allow users to withdraw if the launched tokens were deposited AND the owner withdrew his accepted tokens
+        if launched_token_supply != 0 && accepted_token_sc_balance == 0 {
             let bought_tokens = self.compute_user_bought_tokens(&total_user_deposit);
             self.send().direct_non_zero(
                 user,
@@ -68,7 +72,6 @@ pub trait RedeemModule:
 
             bought_tokens
         } else {
-            let accepted_token_id = self.accepted_token_id().get();
             self.send()
                 .direct_non_zero(user, &accepted_token_id, 0, &total_user_deposit);
 
