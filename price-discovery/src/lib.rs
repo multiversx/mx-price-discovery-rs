@@ -62,7 +62,7 @@ pub trait PriceDiscovery:
         );
         self.require_valid_timestamp(user_deposit_withdraw_time);
         self.require_valid_timestamp(owner_deposit_withdraw_time);
-        self.require_valid_timestamp(owner_redeem_time);
+        self.require_valid_long_timestamp(owner_redeem_time);
 
         self.launched_token_id().set(launched_token_id);
         self.accepted_token_id().set(accepted_token_id);

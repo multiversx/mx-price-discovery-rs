@@ -1,5 +1,5 @@
 use crate::{
-    phase::{Phase, MAX_PHASE_DURATION},
+    phase::{Phase, MAX_LONG_PHASE_DURATION, MAX_PHASE_DURATION},
     Timestamp,
 };
 
@@ -7,6 +7,7 @@ multiversx_sc::imports!();
 
 pub static INVALID_CURRENT_PHASE_ERR_MSG: &[u8] = b"Invalid current phase";
 pub static INVALID_TIMESTAMP_CHANGE_ERR_MSG: &[u8] = b"Invalid timestamp change";
+pub static INVALID_TIMESTAMP_DURATION_ERR_MGS: &[u8] = b"Invalid timestamp";
 
 #[multiversx_sc::module]
 pub trait AdminActionsModule:
@@ -19,6 +20,7 @@ pub trait AdminActionsModule:
     #[endpoint(setUserDepositWithdrawTime)]
     fn set_user_deposit_withdraw_time(&self, user_deposit_withdraw_time: Timestamp) {
         self.require_caller_admin();
+        self.require_valid_timestamp(user_deposit_withdraw_time);
 
         let current_phase = self.get_current_phase();
         if current_phase == Phase::UserDepositWithdraw {
@@ -41,6 +43,7 @@ pub trait AdminActionsModule:
     #[endpoint(setOwnerDepositWithdrawTime)]
     fn set_owner_deposit_withdraw_time(&self, owner_deposit_withdraw_time: Timestamp) {
         self.require_caller_admin();
+        self.require_valid_timestamp(owner_deposit_withdraw_time);
 
         self.set_timestamp(
             owner_deposit_withdraw_time,
@@ -54,6 +57,7 @@ pub trait AdminActionsModule:
     #[endpoint(setOwnerRedeemTime)]
     fn set_owner_redeem_time(&self, owner_redeem_time: Timestamp) {
         self.require_caller_admin();
+        self.require_valid_long_timestamp(owner_redeem_time);
 
         self.set_timestamp(
             owner_redeem_time,
@@ -185,8 +189,6 @@ pub trait AdminActionsModule:
         required_phase_limit: &Phase,
         mapper: &SingleValueMapper<Timestamp>,
     ) {
-        self.require_valid_timestamp(new_timestamp);
-
         let phase_before = self.get_current_phase();
         require!(
             &phase_before <= required_phase_limit,
@@ -205,7 +207,14 @@ pub trait AdminActionsModule:
     fn require_valid_timestamp(&self, timestamp: Timestamp) {
         require!(
             timestamp > 0 && timestamp <= MAX_PHASE_DURATION,
-            "Invalid timestamp"
+            INVALID_TIMESTAMP_DURATION_ERR_MGS
+        );
+    }
+
+    fn require_valid_long_timestamp(&self, timestamp: Timestamp) {
+        require!(
+            timestamp > 0 && timestamp <= MAX_LONG_PHASE_DURATION,
+            INVALID_TIMESTAMP_DURATION_ERR_MGS
         );
     }
 
