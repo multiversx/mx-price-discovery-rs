@@ -1,9 +1,13 @@
-use crate::{phase::Phase, Timestamp};
+use crate::{
+    phase::{Phase, MAX_LONG_PHASE_DURATION, MAX_PHASE_DURATION},
+    Timestamp,
+};
 
 multiversx_sc::imports!();
 
 pub static INVALID_CURRENT_PHASE_ERR_MSG: &[u8] = b"Invalid current phase";
 pub static INVALID_TIMESTAMP_CHANGE_ERR_MSG: &[u8] = b"Invalid timestamp change";
+pub static INVALID_TIMESTAMP_DURATION_ERR_MGS: &[u8] = b"Invalid timestamp";
 
 #[multiversx_sc::module]
 pub trait AdminActionsModule:
@@ -16,6 +20,16 @@ pub trait AdminActionsModule:
     #[endpoint(setUserDepositWithdrawTime)]
     fn set_user_deposit_withdraw_time(&self, user_deposit_withdraw_time: Timestamp) {
         self.require_caller_admin();
+        self.require_valid_timestamp(user_deposit_withdraw_time);
+
+        let current_phase = self.get_current_phase();
+        if current_phase == Phase::UserDepositWithdraw {
+            let current_time = self.user_deposit_withdraw_time().get();
+            require!(
+                current_time <= user_deposit_withdraw_time,
+                "May only extend phase at this point, not reduce"
+            );
+        }
 
         self.set_timestamp(
             user_deposit_withdraw_time,
@@ -29,6 +43,7 @@ pub trait AdminActionsModule:
     #[endpoint(setOwnerDepositWithdrawTime)]
     fn set_owner_deposit_withdraw_time(&self, owner_deposit_withdraw_time: Timestamp) {
         self.require_caller_admin();
+        self.require_valid_timestamp(owner_deposit_withdraw_time);
 
         self.set_timestamp(
             owner_deposit_withdraw_time,
@@ -42,6 +57,7 @@ pub trait AdminActionsModule:
     #[endpoint(setOwnerRedeemTime)]
     fn set_owner_redeem_time(&self, owner_redeem_time: Timestamp) {
         self.require_caller_admin();
+        self.require_valid_long_timestamp(owner_redeem_time);
 
         self.set_timestamp(
             owner_redeem_time,
@@ -155,6 +171,14 @@ pub trait AdminActionsModule:
         user_id: AddressId,
         limit: &BigUint,
     ) {
+        if limit > &0 {
+            let user_min_deposit = self.user_min_deposit().get();
+            require!(
+                limit >= &user_min_deposit,
+                "May not set limit under min user deposit"
+            );
+        }
+
         self.user_deposit_limit(user_id).set(limit);
         self.set_user_limit_event(user_addr, limit);
     }
@@ -177,6 +201,20 @@ pub trait AdminActionsModule:
         require!(
             phase_before == phase_after,
             INVALID_TIMESTAMP_CHANGE_ERR_MSG
+        );
+    }
+
+    fn require_valid_timestamp(&self, timestamp: Timestamp) {
+        require!(
+            timestamp > 0 && timestamp <= MAX_PHASE_DURATION,
+            INVALID_TIMESTAMP_DURATION_ERR_MGS
+        );
+    }
+
+    fn require_valid_long_timestamp(&self, timestamp: Timestamp) {
+        require!(
+            timestamp > 0 && timestamp <= MAX_LONG_PHASE_DURATION,
+            INVALID_TIMESTAMP_DURATION_ERR_MGS
         );
     }
 

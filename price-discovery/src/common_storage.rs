@@ -2,8 +2,6 @@ use crate::Timestamp;
 
 multiversx_sc::imports!();
 
-pub const MAX_PERCENTAGE: u64 = 10_000_000_000_000; // 100%
-
 #[multiversx_sc::module]
 pub trait CommonStorageModule {
     #[storage_mapper("launchedTokenId")]

@@ -240,7 +240,7 @@ fn user_redeem_too_early_test() {
 }
 
 #[test]
-fn user_redeem_no_owner_deposit() {
+fn user_redeem_no_owner_deposit_test() {
     let mut setup = PriceDiscSetup::new(price_discovery::contract_obj);
 
     setup.b_mock.set_block_timestamp(START_TIME + 1);
@@ -251,6 +251,48 @@ fn user_redeem_no_owner_deposit() {
     setup
         .call_user_deposit(&setup.second_user_address.clone(), 9_000)
         .assert_ok();
+
+    setup.b_mock.set_block_timestamp(
+        START_TIME + USER_DEPOSIT_TIME + OWNER_DEPOSIT_TIME + OWNER_REDEEM_TIME + 1,
+    );
+
+    setup
+        .call_user_redeem(&setup.first_user_address.clone())
+        .assert_ok();
+    setup
+        .call_user_redeem(&setup.second_user_address.clone())
+        .assert_ok();
+
+    setup.b_mock.check_esdt_balance(
+        &setup.first_user_address,
+        ACCEPTED_TOKEN_ID,
+        &rust_biguint!(USER_BALANCE),
+    );
+    setup.b_mock.check_esdt_balance(
+        &setup.second_user_address,
+        ACCEPTED_TOKEN_ID,
+        &rust_biguint!(USER_BALANCE),
+    );
+}
+
+#[test]
+fn user_redeem_owner_forgot_to_withdraw_test() {
+    let mut setup = PriceDiscSetup::new(price_discovery::contract_obj);
+
+    setup.b_mock.set_block_timestamp(START_TIME + 1);
+
+    setup
+        .call_user_deposit(&setup.first_user_address.clone(), 1_000)
+        .assert_ok();
+    setup
+        .call_user_deposit(&setup.second_user_address.clone(), 9_000)
+        .assert_ok();
+
+    setup
+        .b_mock
+        .set_block_timestamp(START_TIME + USER_DEPOSIT_TIME + 1);
+
+    setup.call_owner_deposit(2_000).assert_ok();
 
     setup.b_mock.set_block_timestamp(
         START_TIME + USER_DEPOSIT_TIME + OWNER_DEPOSIT_TIME + OWNER_REDEEM_TIME + 1,
@@ -303,7 +345,7 @@ fn user_redeem_ok_test() {
     // owner try withdraw twice
     setup
         .call_owner_redeem()
-        .assert_error(10, "insufficient funds");
+        .assert_user_error("Owner already redeemed");
 
     setup.b_mock.set_block_timestamp(
         START_TIME + USER_DEPOSIT_TIME + OWNER_DEPOSIT_TIME + OWNER_REDEEM_TIME + 1,
@@ -315,6 +357,11 @@ fn user_redeem_ok_test() {
     setup
         .call_user_redeem(&setup.second_user_address.clone())
         .assert_ok();
+
+    // user try redeem twice
+    setup
+        .call_user_redeem(&setup.first_user_address.clone())
+        .assert_user_error("User already redeemed");
 
     // check accepted token balance
     setup.b_mock.check_esdt_balance(
@@ -507,5 +554,5 @@ fn set_timestamp_invalid_values_test() {
     // set timestamp too low
     setup
         .call_set_user_deposit_withdraw_timestamp(START_TIME + 20)
-        .assert_user_error("Invalid timestamp change");
+        .assert_user_error("May only extend phase at this point, not reduce");
 }
