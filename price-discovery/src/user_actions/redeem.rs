@@ -40,11 +40,25 @@ pub trait RedeemModule:
         redeemed_tokens
     }
 
+    /// Only to be used in the cases where the owner somehow missed the long owner redeem phase
+    #[only_owner]
+    #[endpoint(withdrawLaunchpadTokens)]
+    fn withdraw_launchpad_tokens(&self) {
+        let phase = self.get_current_phase();
+        self.require_user_redeem_allowed(&phase);
+        self.require_owner_didnt_redeem();
+
+        let launched_token_id = self.launched_token_id().get();
+        let launched_tokens_supply = self.launched_token_balance().take();
+        let owner = self.blockchain().get_caller();
+        self.send()
+            .direct_esdt(&owner, &launched_token_id, 0, &launched_tokens_supply);
+
+        self.owner_redeemed().set(USER_REDEEMED);
+    }
+
     fn owner_redeem(&self, owner: &ManagedAddress) -> EgldOrEsdtTokenPayment {
-        require!(
-            self.owner_redeemed().get() != USER_REDEEMED,
-            "Owner already redeemed"
-        );
+        self.require_owner_didnt_redeem();
 
         let launched_token_supply = self.launched_token_balance().get();
         require!(
@@ -106,6 +120,13 @@ pub trait RedeemModule:
         let reward_amount = total_launched_token_supply * redeem_amount / total_deposit_all_users;
 
         EgldOrEsdtTokenPayment::new(launched_token_id, 0, reward_amount)
+    }
+
+    fn require_owner_didnt_redeem(&self) {
+        require!(
+            self.owner_redeemed().get() != USER_REDEEMED,
+            "Owner already redeemed"
+        );
     }
 
     #[storage_mapper("userRedeemed")]

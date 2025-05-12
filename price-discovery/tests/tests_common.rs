@@ -209,4 +209,15 @@ where
             },
         )
     }
+
+    pub fn call_owner_withdraw_launchpad_tokens(&mut self) -> TxResult {
+        self.b_mock.execute_tx(
+            &self.owner_address,
+            &self.pd_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.withdraw_launchpad_tokens();
+            },
+        )
+    }
 }

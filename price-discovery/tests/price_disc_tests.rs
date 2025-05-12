@@ -315,6 +315,26 @@ fn user_redeem_owner_forgot_to_withdraw_test() {
         ACCEPTED_TOKEN_ID,
         &rust_biguint!(USER_BALANCE),
     );
+
+    setup.b_mock.check_esdt_balance(
+        &setup.owner_address,
+        LAUNCHED_TOKEN_ID,
+        &rust_biguint!(USER_BALANCE - 2_000),
+    );
+
+    // owner later withdraws his tokens
+    setup.call_owner_withdraw_launchpad_tokens().assert_ok();
+
+    setup.b_mock.check_esdt_balance(
+        &setup.owner_address,
+        LAUNCHED_TOKEN_ID,
+        &rust_biguint!(USER_BALANCE),
+    );
+
+    // owner try withdraw again
+    setup
+        .call_owner_withdraw_launchpad_tokens()
+        .assert_user_error("Owner already redeemed");
 }
 
 #[test]
