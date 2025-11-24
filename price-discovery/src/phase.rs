@@ -13,7 +13,6 @@ pub enum Phase {
 }
 
 pub const MAX_PHASE_DURATION: Timestamp = 60 * 60 * 24 * 30; // ~ 1 month
-pub const MAX_LONG_PHASE_DURATION: Timestamp = MAX_PHASE_DURATION * 6; // ~ 6 months
 
 #[multiversx_sc::module]
 pub trait PhaseModule:
