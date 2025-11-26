@@ -1,5 +1,5 @@
 use crate::{
-    phase::{Phase, MAX_LONG_PHASE_DURATION, MAX_PHASE_DURATION},
+    phase::{Phase, MAX_PHASE_DURATION},
     Timestamp,
 };
 
@@ -212,10 +212,7 @@ pub trait AdminActionsModule:
     }
 
     fn require_valid_long_timestamp(&self, timestamp: Timestamp) {
-        require!(
-            timestamp > 0 && timestamp <= MAX_LONG_PHASE_DURATION,
-            INVALID_TIMESTAMP_DURATION_ERR_MGS
-        );
+        require!(timestamp > 0, INVALID_TIMESTAMP_DURATION_ERR_MGS);
     }
 
     #[storage_mapper("admin")]
